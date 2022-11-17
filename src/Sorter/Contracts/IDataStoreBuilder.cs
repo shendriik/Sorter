@@ -1,9 +1,11 @@
 namespace Sorter.Contracts
 {
-    using Shared.Models;
-
-    internal interface IDataStoreBuilder
+    internal interface IDataStoreBuilder<TData>
     {
-        IDataStore<TData> Build<TData>(string name) where TData : BaseDataItem;
+        IDataStore<TData> Build(string name);
+
+        IDataStore<TData> ReadConversionBuild(string name);
+
+        IDataStore<TData> WriteConversionBuild(string name);
     }
 }

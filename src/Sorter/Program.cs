@@ -1,10 +1,11 @@
 ﻿namespace Sorter
 {
+    using System;
+    using System.Collections.Generic;
     using Contracts;
     using Logic;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-    using Shared.Models;
 
     public class Program
     {
@@ -18,12 +19,20 @@
                 .ConfigureServices((context, services) =>
                 {
                     services
+                        .Configure<Settings>(context.Configuration.GetSection(nameof(Settings)))
                         .AddHostedService<WorkerService>()
-                        .AddTransient<IDataStoreBuilder, FileStoreBuilder>()
-                        .AddTransient<IDataItemFactory, DataItemFactory>()
-                        .AddTransient<IMerger, BufferedMerger>()
-                        .AddTransient<ISorter<DataItem>, Sorter<DataItem>>()
-                        .Configure<Settings>(context.Configuration.GetSection(nameof(Settings)));
+                        .AddTransient<IDataStoreBuilder<string>, FileStoreBuilder>()
+                        .AddTransient<ISorter<string>, Sorter>()
+                        .AddTransient<IMerger<string>, KWayMerger<string>>()
+                        .AddSingleton<IDataConverter<string>, RowConverter>()
+                        .AddTransient<StringDefaultComparer>()
+                        .AddTransient<RowComparer>()
+                        .AddTransient<Func<bool, IComparer<string>>>(serviceProvider => key =>
+                            key switch
+                            {
+                                true => serviceProvider.GetService<StringDefaultComparer>(),
+                                false => serviceProvider.GetService<RowComparer>()
+                            });
                 });
     }
 }

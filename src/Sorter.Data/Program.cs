@@ -4,7 +4,6 @@ namespace Sorter.Data
     using Logic;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-    using Shared.Models;
 
     public class Program
     {
@@ -20,7 +19,7 @@ namespace Sorter.Data
                     services
                         .AddHostedService<WorkerService>()
                         .AddTransient<IDataPreparer, TestFilePreparer>()
-                        .AddTransient<IFaker<DataItem>, FakerWithDuplicates<DataItem>>()
+                        .AddTransient<IFaker, FakerWithDuplicates>()
                         .Configure<Settings>(context.Configuration.GetSection(nameof(Settings)));
                 });
     }

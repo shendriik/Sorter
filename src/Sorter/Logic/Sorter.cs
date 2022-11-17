@@ -1,113 +1,109 @@
 namespace Sorter.Logic
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Threading.Tasks.Dataflow;
     using Contracts;
-    using Microsoft.Extensions.Logging;
-    using Shared.Models;
+    using Microsoft.Extensions.Options;
 
-    internal sealed class Sorter<TData>: ISorter<TData> where TData : BaseDataItem, IComparable<TData>
+    internal sealed class Sorter: ISorter<string>
     {
-        private readonly IMerger merger;
-        private readonly IDataStoreBuilder storeBuilder;
-        private readonly ILogger<Sorter<TData>> logger;
-
-        public Sorter(IMerger merger, IDataStoreBuilder storeBuilder, ILogger<Sorter<TData>> logger)
+        private readonly Settings settings;
+        private readonly IDataConverter<string> dataConverter;
+        private readonly IDataStoreBuilder<string> storeBuilder;
+        private readonly Func<bool, IComparer<string>> comparerFunc;
+        private readonly IMerger<string> merger;
+        private readonly IComparer<string> comparer;
+        
+        public Sorter(
+            IDataConverter<string> dataConverter,
+            IOptions<Settings> settings,
+            IDataStoreBuilder<string> storeBuilder, 
+            Func<bool, IComparer<string>> comparerFunc,
+            IMerger<string> merger)
         {
-            this.merger = merger;
+            this.settings = settings.Value;
+            this.dataConverter = dataConverter;
             this.storeBuilder = storeBuilder;
-            this.logger = logger;
+            this.comparerFunc = comparerFunc;
+            this.merger = merger;
+            this.comparer = comparerFunc(true);
         }
         
-        private const int ChunkSize = 3*1024*1024;
-        private TData[] buffer;
-        private Queue<IDataStore<TData>> stores;
-        
-        public async Task SortAsync(IDataStore<TData> source, IDataStore<TData> output, CancellationToken cancellationToken = default)
+        public async Task SortAsync(IDataStore<string> source, IDataStore<string> output, CancellationToken cancellationToken = default)
         {
-            buffer = new TData[ChunkSize];
-            stores = new Queue<IDataStore<TData>>();
-            
-            var watch = new Stopwatch();
-            
-            
-            source.OpenRead();
-            while (!source.IsEnd())
+            var sortedParts = new Queue<IDataStore<string>>();
+            var buffer = new string[settings.BufferSizeMb * 1024 * 1024 / dataConverter.DataSize];
+
+            await PartSortAsync(source, buffer, sortedParts, cancellationToken);
+
+            if (sortedParts.Count == 0)
             {
-                watch.Restart();
+                return;
+            }
+
+            await MergeAsync(output, sortedParts, cancellationToken);
+        }
+
+        private async Task PartSortAsync(IDataStore<string> source, string[] buffer, Queue<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
+        {
+            source.OpenRead();
+            
+            while (true)
+            {
                 var read = await source.GetBulkDataAsync(buffer);
                 if (read == 0)
                 {
                     break;
                 }
-                watch.Stop();
-                logger.LogInformation($"Read part {watch.Elapsed.TotalSeconds} sec.");
-                
-                watch.Restart();
-                Array.Sort(buffer, 0, (int)read);
-                watch.Stop();
-                logger.LogInformation($"Sort part {watch.Elapsed.TotalSeconds} sec.");
-                
-                watch.Restart();
-                var sorted = storeBuilder.Build<TData>(stores.Count.ToString());
-                sorted.OpenWrite();
-                
-                // write by lines
-                for (var index2 = 0; index2 < read; index2++)
-                {
-                    var data = buffer[index2];
-                    await sorted.WriteDataAsync(data, cancellationToken);
-                }
-                watch.Stop();
-                logger.LogInformation($"Write part {watch.Elapsed.TotalSeconds} sec.");
 
-                sorted.Close();
-                stores.Enqueue(sorted);
+                Array.Sort(buffer, 0, (int)read, comparer);
+
+                var sortedPart = storeBuilder.WriteConversionBuild(sortedParts.Count.ToString());
+                sortedPart.OpenWrite();
+                
+                for (var write = 0; write < read; write++)
+                {
+                    var data = buffer[write];
+                    await sortedPart.WriteDataAsync(data, cancellationToken);
+                }
+
+                sortedPart.Close();
+                sortedParts.Enqueue(sortedPart);
             }
 
             source.Close();
+        }
+        
+        private async Task MergeAsync(IDataStore<string> output, Queue<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
+        {
+            var partNumber = sortedParts.Count;
             
-            watch.Stop();
-            logger.LogInformation($"Split data into {stores.Count} sorted parts in {watch.Elapsed.TotalSeconds} sec.");
-            
-            if (stores.Count == 0)
+            while (sortedParts.Count > 1)
             {
-                return;
+                var partsToMerge = new List<IDataStore<string>>();
+                var deep = sortedParts.Count / settings.MergeDeep < 2 ? sortedParts.Count : settings.MergeDeep;
+                while (partsToMerge.Count < deep)
+                {
+                    var part = sortedParts.Dequeue();
+                    partsToMerge.Add(part);
+                    part.OpenRead();
+                }
+
+                var merged = sortedParts.Count == 0 ? output : storeBuilder.Build(partNumber.ToString());
+                merged.OpenWrite();
+
+                await merger.MergeAsync(partsToMerge, merged, cancellationToken);
+
+                Parallel.ForEach(partsToMerge, p => p.Close());
+                merged.Close();
+
+                sortedParts.Enqueue(merged);
+                partNumber++;
             }
             
-            watch.Restart();
-            var cycles = 0;
-            do
-            {
-                cycles++;
-
-                stores.TryDequeue(out var src1);
-                stores.TryDequeue(out var src2);
-
-                var merged = stores.Count == 0 ? output : storeBuilder.Build<TData>(CreateStoreName(src1?.Name, src2?.Name));
-
-                src1?.OpenRead();
-                src2?.OpenRead();
-                merged.OpenWrite();
-                
-                await merger.MergeAsync(src1, src2, merged, cancellationToken);
-                stores.Enqueue(merged);
-
-                logger.LogInformation($"Merged part {src1?.Name}, {src2?.Name} into part {merged.Name}");
-            } 
-            while (stores.Count > 1);
-            output.Close();
-            
-            watch.Stop();
-            logger.LogInformation($"Merges complete in ({cycles} cycles) in {watch.Elapsed.TotalSeconds} sec.");
+            //TODO: delete parts
         }
-
-        private string CreateStoreName(string store1, string store2)
-            => Guid.NewGuid().ToString(); // (store1 ?? "_") + (store2 ?? "_");
     }
 }

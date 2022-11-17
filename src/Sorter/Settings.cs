@@ -7,5 +7,9 @@ namespace Sorter
         public string SourceFileName { get; set; }
         
         public string DestinationFileName { get; set; }
+        
+        public int BufferSizeMb { get; set; }
+        
+        public int MergeDeep { get; set; }
     }
 }

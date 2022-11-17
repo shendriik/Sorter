@@ -16,9 +16,5 @@
             <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
         </AssemblyAttribute>
     </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Sorter.Shared\Sorter.Shared.csproj" />
-    </ItemGroup>
     
 </Project>

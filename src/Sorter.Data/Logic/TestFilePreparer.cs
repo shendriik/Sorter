@@ -8,15 +8,14 @@ namespace Sorter.Data.Logic
     using Contracts;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
-    using Shared.Models;
 
     internal sealed class TestFilePreparer : IDataPreparer
     {
-        private readonly IFaker<DataItem> faker;
+        private readonly IFaker faker;
         private readonly ILogger<TestFilePreparer> logger;
         private readonly Settings settings;
             
-        public TestFilePreparer(IFaker<DataItem> faker, IOptions<Settings> settings, ILogger<TestFilePreparer> logger)
+        public TestFilePreparer(IFaker faker, IOptions<Settings> settings, ILogger<TestFilePreparer> logger)
         {
             this.faker = faker;
             this.logger = logger;
@@ -40,7 +39,7 @@ namespace Sorter.Data.Logic
             
             while (writer.BaseStream.Length < settings.SizeInBytes)
             {
-                await writer.WriteLineAsync(faker.Generate().ToString().AsMemory(), cancellation);
+                await writer.WriteLineAsync(faker.Generate().AsMemory(), cancellation);
                 rowsCount++;
             }
             

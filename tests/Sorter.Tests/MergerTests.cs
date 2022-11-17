@@ -1,9 +1,10 @@
 namespace Sorter.Tests
 {
-    using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
     using Logic;
+    using NSubstitute;
     using NUnit.Framework;
 
     internal sealed class MergerTests : BaseTests
@@ -11,48 +12,50 @@ namespace Sorter.Tests
         public static IEnumerable<TestCaseData> TestCases()
         {
             yield return new TestCaseData(
-                arg1: new[] { 7, 8, 9, 11 },
-                arg2: Array.Empty<int>())
+                new[] { 7, 8, 9, 10 },
+                new[] { 1, 3, 5, 6 },
+                new[] { 0, 2, 4, 11 },
+                new[] { 1, 12, 13, 15 })
             {
-                ExpectedResult = new[] { 7, 8, 9, 11 }
+                ExpectedResult = new[]
+                {
+                    0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15
+                }
             };
+
             yield return new TestCaseData(
-                arg1: new[] { 7, 8, 9, 11 },
-                arg2: new[] { 2, 5, 6 })
+                new[] { "b", "c", "d", "e" },
+                new[] { "a", "aa", "bb", "ee" },
+                new[] { "abc", "abd", "abe", "baa" },
+                new[] { "aaa", "bbb", "ccc", "ddd" })
             {
-                ExpectedResult = new[] { 2, 5, 6, 7, 8, 9, 11 }
-            };
-            yield return new TestCaseData(
-                arg1: new[] { 1, 2, 3 },
-                arg2: new[] { 2, 5, 6 })
-            {
-                ExpectedResult = new[] { 1, 2, 2, 3, 5, 6 }
-            };
-            yield return new TestCaseData(
-                arg1: new[] { "a", "c", "e" },
-                arg2: new[] { "b", "d", "f" })
-            {
-                ExpectedResult = new[] { "a", "b", "c", "d", "e", "f" }
-            };
-            yield return new TestCaseData(
-                arg1: new[] { "e" },
-                arg2: new[] { "b", "d", "f" })
-            {
-                ExpectedResult = new[] { "b", "d", "e", "f" }
+                ExpectedResult = new[]
+                {
+                    "a", "aa", "aaa", "abc", "abd", "abe", "b", "baa", "bb", "bbb", "c", "ccc", "d", "ddd", "e", "ee"
+                }
             };
         }
 
         [TestCaseSource(nameof(TestCases))]
-        public async Task<T[]> Should_merge_sorted_data<T>(T[] src1, T[] src2) where T: IComparable<T>, IEquatable<T>
+        public async Task<T[]> Should_merge_sorted_data<T>(T[] source1,T[] source2, T[] source3, T[] source4)
         {
             // Given
-            var instance = new Merger();
+            var comparer = Substitute.For<IComparer<T>>();
+            comparer.Compare(Arg.Any<T>(), Arg.Any<T>()).Returns(x =>
+                Comparer<T>.Default.Compare(x.ArgAt<T>(0), x.ArgAt<T>(1)));
+            
+            var instance = new KWayMerger<T>(_ => comparer);
             var output = new MemoryTestDataStore<T>();
             
             // When
             await instance.MergeAsync(
-                await ArrayToDataStoreAsync(src1),
-                await ArrayToDataStoreAsync(src2),
+                new []
+                {
+                    await ArrayToDataStoreAsync(source1),
+                    await ArrayToDataStoreAsync(source2),
+                    await ArrayToDataStoreAsync(source3),
+                    await ArrayToDataStoreAsync(source4),
+                },
                 output);
             
             // Then

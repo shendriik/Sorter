@@ -16,8 +16,6 @@ namespace Sorter.Tests
             buffer = new List<T>();
         }
 
-        public string Name => "test";
-
         public void OpenRead()
         {
             readPosition = 0;
@@ -26,6 +24,11 @@ namespace Sorter.Tests
         public void OpenWrite()
         {
             writePosition = 0;
+        }
+
+        public Task<long> GetBulkDataAsync(T[] buffer)
+        {
+            throw new System.NotImplementedException();
         }
 
         public void Close()

@@ -1,7 +1,7 @@
 namespace Sorter.Data.Contracts
 {
-    internal interface IFaker<T> where T: class
+    internal interface IFaker
     {
-        T Generate();
+        string Generate();
     }
 }
