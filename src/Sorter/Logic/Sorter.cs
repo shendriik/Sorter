@@ -34,7 +34,7 @@ namespace Sorter.Logic
         public async Task SortAsync(IDataStore<string> source, IDataStore<string> output, CancellationToken cancellationToken = default)
         {
             var sortedParts = new Queue<IDataStore<string>>();
-            var buffer = new string[settings.BufferSizeMb * 1024 * 1024 / dataConverter.DataSize];
+            var buffer = new string[settings.BufferSizeKb * 1024 / dataConverter.DataSize];
 
             await PartSortAsync(source, buffer, sortedParts, cancellationToken);
 
@@ -80,7 +80,7 @@ namespace Sorter.Logic
         {
             var partNumber = sortedParts.Count;
             
-            while (sortedParts.Count > 1)
+            while (sortedParts.Count > 0)
             {
                 var partsToMerge = new List<IDataStore<string>>();
                 var deep = sortedParts.Count / settings.MergeDeep < 2 ? sortedParts.Count : settings.MergeDeep;
@@ -96,10 +96,13 @@ namespace Sorter.Logic
 
                 await merger.MergeAsync(partsToMerge, merged, cancellationToken);
 
+                if (sortedParts.Count > 0)
+                {
+                    sortedParts.Enqueue(merged);
+                }
+                
                 Parallel.ForEach(partsToMerge, p => p.Close());
                 merged.Close();
-
-                sortedParts.Enqueue(merged);
                 partNumber++;
             }
             

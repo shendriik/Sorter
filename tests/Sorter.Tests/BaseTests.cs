@@ -1,7 +1,9 @@
 namespace Sorter.Tests
 {
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Contracts;
+    using NSubstitute;
 
     internal abstract class BaseTests
     {
@@ -34,6 +36,16 @@ namespace Sorter.Tests
             store.Close();
 
             return dest;
+        }
+
+        protected static IComparer<T> GetDefaultComparer<T>()
+        {
+            var comparer = Substitute.For<IComparer<T>>();
+            
+            comparer.Compare(Arg.Any<T>(), Arg.Any<T>())
+                .Returns(x => Comparer<T>.Default.Compare(x.ArgAt<T>(0), x.ArgAt<T>(1)));
+
+            return comparer;
         }
     }    
 }

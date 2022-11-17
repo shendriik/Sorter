@@ -26,13 +26,15 @@ namespace Sorter.Tests
             writePosition = 0;
         }
 
-        public Task<long> GetBulkDataAsync(T[] buffer)
+        public Task<long> GetBulkDataAsync(T[] output)
         {
-            throw new System.NotImplementedException();
-        }
+            long index = 0;
+            for (index = 0; index < output.Length && !IsEnd(); index++)
+            {
+                output[index] = buffer[readPosition++];
+            }
 
-        public void Close()
-        {
+            return Task.FromResult(index);
         }
 
         public Task<T> GetDataAsync()
@@ -41,11 +43,6 @@ namespace Sorter.Tests
                 readPosition == writePosition
                     ? default
                     : buffer[readPosition++]);
-        }
-
-        public Task WriteBulkDataAsync(T[] data, int start, long length, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
         }
 
         public Task WriteDataAsync(T data, CancellationToken cancellationToken = default)
@@ -66,6 +63,10 @@ namespace Sorter.Tests
             return writePosition;
         }
 
+        public void Close()
+        {
+        }
+        
         public void Dispose()
         {
         }
