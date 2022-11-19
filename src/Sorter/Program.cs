@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using Contracts;
     using Logic;
+    using Logic.Files;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
 
@@ -21,7 +22,7 @@
                     services
                         .Configure<Settings>(context.Configuration.GetSection(nameof(Settings)))
                         .AddHostedService<WorkerService>()
-                        .AddTransient<IDataStoreBuilder<string>, FileStoreBuilder>()
+                        .AddTransient<IDataStoreBuilder, FileStoreBuilder>()
                         .AddTransient<ISorter<string>, Sorter>()
                         .AddTransient<IMerger<string>, KWayMerger<string>>()
                         .AddSingleton<IDataConverter<string>, RowConverter>()
@@ -31,7 +32,7 @@
                             key switch
                             {
                                 true => serviceProvider.GetService<StringDefaultComparer>(),
-                                false => serviceProvider.GetService<StringDefaultComparer>()
+                                false => serviceProvider.GetService<RowComparer>()
                             });
                 });
     }

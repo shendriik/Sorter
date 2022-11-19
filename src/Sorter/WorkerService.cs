@@ -36,7 +36,7 @@ namespace Sorter
         {
             using var scope = factory.CreateScope();
             var sorter = scope.ServiceProvider.GetRequiredService<ISorter<string>>();
-            var storeBuilder = scope.ServiceProvider.GetRequiredService<IDataStoreBuilder<string>>();
+            var storeBuilder = scope.ServiceProvider.GetRequiredService<IDataStoreBuilder>();
 
             var watch = new Stopwatch();
             watch.Start();
@@ -46,8 +46,8 @@ namespace Sorter
             await dataConverter.ConfigureFromSourceAsync(prepareRunSource);
             prepareRunSource.Close();
 
-            using var source = storeBuilder.ReadConversionBuild(settings.SourceFileName);
-            using var dest = storeBuilder.WriteConversionBuild(settings.DestinationFileName);
+            using var source = storeBuilder.Build(settings.SourceFileName, readConvert: true);
+            using var dest = storeBuilder.Build(settings.DestinationFileName);
             
             try
             {

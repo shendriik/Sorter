@@ -30,10 +30,8 @@ namespace Sorter.Tests
             var converter = Substitute.For<IDataConverter<string>>();
             converter.DataSize.Returns(lineSize);
             
-            var storeBuilder = Substitute.For<IDataStoreBuilder<string>>();
-            storeBuilder.Build(Arg.Any<string>()).Returns(x => new MemoryTestDataStore<string>());
-            storeBuilder.ReadConversionBuild(Arg.Any<string>()).Returns(x => new MemoryTestDataStore<string>());
-            storeBuilder.WriteConversionBuild(Arg.Any<string>()).Returns(x => new MemoryTestDataStore<string>());
+            var storeBuilder = Substitute.For<IDataStoreBuilder>();
+            storeBuilder.Build(default, default, default).ReturnsForAnyArgs(x => new MemoryTestDataStore<string>());
             
             var instance = new Sorter(
                 converter, 

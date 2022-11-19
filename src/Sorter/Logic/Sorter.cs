@@ -11,7 +11,7 @@ namespace Sorter.Logic
     {
         private readonly Settings settings;
         private readonly IDataConverter<string> dataConverter;
-        private readonly IDataStoreBuilder<string> storeBuilder;
+        private readonly IDataStoreBuilder storeBuilder;
         private readonly Func<bool, IComparer<string>> comparerFunc;
         private readonly IMerger<string> merger;
         private readonly IComparer<string> comparer;
@@ -19,7 +19,7 @@ namespace Sorter.Logic
         public Sorter(
             IDataConverter<string> dataConverter,
             IOptions<Settings> settings,
-            IDataStoreBuilder<string> storeBuilder, 
+            IDataStoreBuilder storeBuilder, 
             Func<bool, IComparer<string>> comparerFunc,
             IMerger<string> merger)
         {
@@ -33,7 +33,7 @@ namespace Sorter.Logic
         
         public async Task SortAsync(IDataStore<string> source, IDataStore<string> output, CancellationToken cancellationToken = default)
         {
-            var sortedParts = new Queue<IDataStore<string>>();
+            var sortedParts = new List<IDataStore<string>>();
             var buffer = new string[settings.BufferSizeKb * 1024 / dataConverter.DataSize];
 
             await PartSortAsync(source, buffer, sortedParts, cancellationToken);
@@ -46,7 +46,7 @@ namespace Sorter.Logic
             await MergeAsync(output, sortedParts, cancellationToken);
         }
 
-        private async Task PartSortAsync(IDataStore<string> source, string[] buffer, Queue<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
+        private async Task PartSortAsync(IDataStore<string> source, string[] buffer, ICollection<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
         {
             source.OpenRead();
             
@@ -60,7 +60,7 @@ namespace Sorter.Logic
 
                 Array.Sort(buffer, 0, (int)read, comparer);
 
-                var sortedPart = storeBuilder.Build(sortedParts.Count.ToString());
+                var sortedPart = storeBuilder.Build(sortedParts.Count.ToString(), writeConvert: true);
                 sortedPart.OpenWrite();
                 
                 for (var write = 0; write < read; write++)
@@ -70,41 +70,22 @@ namespace Sorter.Logic
                 }
 
                 sortedPart.Close();
-                sortedParts.Enqueue(sortedPart);
+                var bufferedPartReader = storeBuilder.Build(sortedPart);
+                sortedParts.Add(bufferedPartReader);
             }
 
             source.Close();
         }
         
-        private async Task MergeAsync(IDataStore<string> output, Queue<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
+        private async Task MergeAsync(IDataStore<string> output, IReadOnlyCollection<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
         {
-            var partNumber = sortedParts.Count;
+            Parallel.ForEach(sortedParts, p => p.OpenRead());
+            output.OpenRead();
             
-            while (sortedParts.Count > 0)
-            {
-                var partsToMerge = new List<IDataStore<string>>();
-                var deep = sortedParts.Count / settings.MergeDeep < 2 ? sortedParts.Count : settings.MergeDeep;
-                while (partsToMerge.Count < deep)
-                {
-                    var part = sortedParts.Dequeue();
-                    partsToMerge.Add(part);
-                    part.OpenRead();
-                }
-
-                var merged = sortedParts.Count == 0 ? output : storeBuilder.Build(partNumber.ToString());
-                merged.OpenWrite();
-
-                await merger.MergeAsync(partsToMerge, merged, cancellationToken);
-
-                if (sortedParts.Count > 0)
-                {
-                    sortedParts.Enqueue(merged);
-                }
-                
-                Parallel.ForEach(partsToMerge, p => p.Close());
-                merged.Close();
-                partNumber++;
-            }
+            await merger.MergeAsync(sortedParts, output, cancellationToken);
+            
+            Parallel.ForEach(sortedParts, p => p.Close());
+            output.Close();
             
             //TODO: delete parts
         }

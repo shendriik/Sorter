@@ -1,9 +1,9 @@
-namespace Sorter.Logic
+namespace Sorter.Logic.Files
 {
     using Contracts;
     using Microsoft.Extensions.Options;
 
-    internal sealed class FileStoreBuilder: IDataStoreBuilder<string>
+    internal sealed class FileStoreBuilder: IDataStoreBuilder
     {
         private readonly IDataConverter<string> converter;
         private readonly Settings settings;
@@ -13,20 +13,19 @@ namespace Sorter.Logic
             this.settings = settings.Value;
             this.converter = converter;
         }
-
-        public IDataStore<string> Build(string name)
+        
+        public IDataStore<string> Build(IDataStore<string> store, int bufferSize)
         {
-            return new FileStore(settings.Path, name);
+            return new BufferedFileStore(store);
         }
         
-        public IDataStore<string> ReadConversionBuild(string name)
+        public IDataStore<string> Build(string name, bool readConvert = false, bool writeConvert = false)
         {
-            return new FileStoreReadConversion(settings.Path, name, converter.InputConversion);
-        }
-        
-        public IDataStore<string> WriteConversionBuild(string name)
-        {
-            return new FileStoreWriteConversion(settings.Path, name, converter.OutputConversion);
+            return new FileStore(
+                settings.Path,
+                name,
+                readConvert ? converter.InputConversion : s => s,
+                writeConvert ? converter.OutputConversion : s => s);
         }
     }
 }

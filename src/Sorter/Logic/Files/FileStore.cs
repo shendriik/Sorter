@@ -1,23 +1,27 @@
-namespace Sorter.Logic
+namespace Sorter.Logic.Files
 {
     using System;
     using System.IO;
-    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Contracts;
 
-    internal class FileStore: IDataStore<string>
+    internal sealed class FileStore: IDataStore<string>
     {
         private const string FileNameFormat = "part{0}.txt";
         private const int BufferSize = 80 * 1024;
-        
-        private readonly string fullPath;
 
+        private readonly Func<string, string> inputConvert;
+        private readonly Func<string, string> outputConvert;
+            
+        private readonly string fullPath;
         private StreamReader reader;
         private StreamWriter writer;
 
-        public FileStore(string path, string name)
+        public FileStore(string path, 
+            string name, 
+            Func<string,string> inputConvert,
+            Func<string,string> outputConvert)
         {
             var fileName = string.IsNullOrEmpty(Path.GetExtension(name))
                 ? string.Format(FileNameFormat, name)
@@ -25,11 +29,10 @@ namespace Sorter.Logic
             
             fullPath = Path.Combine(path, fileName);
 
-            Name = name;
+            this.inputConvert = inputConvert;
+            this.outputConvert = outputConvert;
         }
-        
-        public string Name { get; }
-        
+
         public void OpenRead()
         {
             reader = new StreamReader(fullPath,
@@ -95,8 +98,8 @@ namespace Sorter.Logic
             Close();
         }
 
-        protected virtual string ConvertInput(string input) => input;
+        private string ConvertInput(string input) => inputConvert(input);
 
-        protected virtual string ConvertOutput(string output) => output;
+        private string ConvertOutput(string output) => outputConvert(output);
     }
 }

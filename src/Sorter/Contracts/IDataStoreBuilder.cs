@@ -1,11 +1,9 @@
 namespace Sorter.Contracts
 {
-    internal interface IDataStoreBuilder<TData>
+    internal interface IDataStoreBuilder
     {
-        IDataStore<TData> Build(string name);
+        IDataStore<string> Build(IDataStore<string> store);
 
-        IDataStore<TData> ReadConversionBuild(string name);
-
-        IDataStore<TData> WriteConversionBuild(string name);
+        IDataStore<string> Build(string name, bool readConvert = false, bool writeConvert = false);
     }
 }

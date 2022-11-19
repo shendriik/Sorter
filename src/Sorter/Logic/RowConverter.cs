@@ -7,6 +7,8 @@ namespace Sorter.Logic
     internal sealed class RowConverter : IDataConverter<string>
     {
         private const char EmptyChar = (char)0x01;
+        private const char DotChar = '.';
+        
         private int maxTextLength;
         private int maxDigitLength;
 
@@ -25,7 +27,7 @@ namespace Sorter.Logic
                     break;
                 }
 
-                var dotIndex = row.IndexOf(".", StringComparison.Ordinal);
+                var dotIndex = row.IndexOf(DotChar, StringComparison.Ordinal);
 
                 if (maxNumberSize < dotIndex)
                 {
@@ -43,9 +45,9 @@ namespace Sorter.Logic
 
         public string InputConversion(string input)
         {
-            var dotIndex = input.IndexOf(".", StringComparison.Ordinal);
+            var dotIndex = input.IndexOf(DotChar, StringComparison.Ordinal);
 
-            return NormalizeText(input[(dotIndex + 2)..]) + "." + NormalizeNumber(input[..dotIndex]);
+            return NormalizeText(input[(dotIndex + 2)..]) + DotChar + NormalizeNumber(input[..dotIndex]);
         }
 
         public string OutputConversion(string output)
@@ -55,7 +57,7 @@ namespace Sorter.Logic
             var number = output[(maxTextLength + 1)..];
             var text = output[..textEndPosition];
 
-            return TrimNumber(number) + ". " + text;
+            return TrimNumber(number) + DotChar + " " + text;
         }
 
         private string NormalizeNumber(string src)
@@ -75,7 +77,7 @@ namespace Sorter.Logic
 
         private void ConfigureInternal(int maxTextSize, int maxDigitSize)
         {
-            maxTextLength = maxTextSize + 1; // hack to make find end of the text instead of searching "."
+            maxTextLength = maxTextSize + 1; // hack to make find end of the text instead of searching '.' char
             maxDigitLength = maxDigitSize;
         }
     }
