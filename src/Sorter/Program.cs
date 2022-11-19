@@ -31,7 +31,7 @@
                             key switch
                             {
                                 true => serviceProvider.GetService<StringDefaultComparer>(),
-                                false => serviceProvider.GetService<RowComparer>()
+                                false => serviceProvider.GetService<StringDefaultComparer>()
                             });
                 });
     }

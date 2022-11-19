@@ -60,7 +60,7 @@ namespace Sorter.Logic
 
                 Array.Sort(buffer, 0, (int)read, comparer);
 
-                var sortedPart = storeBuilder.WriteConversionBuild(sortedParts.Count.ToString());
+                var sortedPart = storeBuilder.Build(sortedParts.Count.ToString());
                 sortedPart.OpenWrite();
                 
                 for (var write = 0; write < read; write++)

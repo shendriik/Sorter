@@ -47,7 +47,7 @@ namespace Sorter
             prepareRunSource.Close();
 
             using var source = storeBuilder.ReadConversionBuild(settings.SourceFileName);
-            using var dest = storeBuilder.Build(settings.DestinationFileName);
+            using var dest = storeBuilder.WriteConversionBuild(settings.DestinationFileName);
             
             try
             {
