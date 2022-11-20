@@ -16,7 +16,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "commandLineArgs": "Settings:SizeInBytes=10737418240 Settings:Path=D:\\sort1\\input.txt"
+      "commandLineArgs": "Settings:SizeInBytes=1073741824 Settings:Path=D:\\sort1\\input.txt"
     },
     "IIS Express": {
       "commandName": "IISExpress",

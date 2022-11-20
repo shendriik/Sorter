@@ -43,6 +43,8 @@ namespace Sorter.Logic
             {
                 return;
             }
+            
+            //GC.Collect();
 
             var partBufferSize = (int)Math.Ceiling((float)bufferSize / sortedParts.Count);
             var partsToMerge = new List<IDataStore<string>>(sortedParts.Count);

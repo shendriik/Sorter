@@ -7,15 +7,28 @@ namespace Sorter.Logic.Files
     internal sealed class BufferedFileStore : IDataStore<string>
     {
         private readonly IDataStore<string> store;
-
-        public BufferedFileStore(IDataStore<string> store)
+        private readonly string[] buffer;
+        private readonly int startIndex;
+        
+        private readonly long bufferSize;
+        private long bufferedSize;
+        private long readPosition;
+        private bool sourceIsEnd;
+        
+        public BufferedFileStore(IDataStore<string> store, string[] buffer, int startIndex, long bufferSize)
         {
             this.store = store;
+            this.buffer = buffer;
+            this.startIndex = startIndex;
+            this.bufferSize = bufferSize;
         }
 
         public void OpenRead()
         {
             store.OpenRead();
+
+            bufferedSize = 0;
+            readPosition = 0;
         }
 
         public void OpenWrite()
@@ -23,14 +36,31 @@ namespace Sorter.Logic.Files
             store.OpenWrite();
         }
 
-        public Task<long> GetBulkDataAsync(string[] buffer)
+        public Task<long> GetBulkDataAsync(string[] buff, int bulkStartIndex, long bulkSize)
         {
-            return store.GetBulkDataAsync(buffer);
+            return store.GetBulkDataAsync(buff, bulkStartIndex, bulkSize);
         }
-
-        public Task<string> GetDataAsync()
+        
+        public async Task<string> GetDataAsync()
         {
-            return store.GetDataAsync();
+            if (sourceIsEnd)
+            {
+                return null;
+            }
+            
+            if (bufferedSize - readPosition == 0)
+            {
+                readPosition = 0; 
+                bufferedSize = await store.GetBulkDataAsync(buffer, startIndex, bufferSize);
+
+                if (bufferedSize == 0)
+                {
+                    sourceIsEnd = true;
+                    return null;
+                }
+            }
+
+            return buffer[startIndex + readPosition++];
         }
 
         public Task WriteDataAsync(string data, CancellationToken cancellationToken)
@@ -40,7 +70,7 @@ namespace Sorter.Logic.Files
 
         public bool IsEnd()
         {
-            return store.IsEnd();
+            return sourceIsEnd;
         }
 
         public long Length()

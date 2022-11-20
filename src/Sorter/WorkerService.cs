@@ -45,6 +45,7 @@ namespace Sorter
             prepareRunSource.OpenRead();
             await dataConverter.ConfigureFromSourceAsync(prepareRunSource);
             prepareRunSource.Close();
+            logger.LogInformation($"Prepare run complete in {watch.Elapsed.TotalSeconds} sec.");
 
             using var source = storeBuilder.Build(settings.SourceFileName, readConvert: true);
             using var dest = storeBuilder.Build(settings.DestinationFileName);
