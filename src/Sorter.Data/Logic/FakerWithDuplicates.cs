@@ -55,8 +55,7 @@ namespace Sorter.Data.Logic
         {
             var count = settings.MinWordsCount + f.Random.Number(additionalWordsMax);
 
-            // var words = Guid.NewGuid().ToString().Split('-');
-            var sentence = string.Join(" ", f.Lorem.Words(count));//words.Take(count)); 
+            var sentence = string.Join(" ", f.Lorem.Words(count)); 
             return string.Concat(sentence[..1].ToUpper(), sentence.AsSpan(1));
         }
         

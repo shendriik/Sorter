@@ -1,0 +1,9 @@
+#
+# Standard ignore list (do not edit manually)
+#
+
+.git
+.idea
+bin/
+obj/
+*.sln.DotSettings.user

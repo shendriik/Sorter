@@ -14,6 +14,7 @@ namespace Sorter.Tests
     {
         public static IEnumerable<TestCaseData> TestCases()
         {
+            yield return CreateLongSequenceCase(1000, 1);
             yield return CreateLongSequenceCase(1000, 100);
             yield return CreateLongSequenceCase(1000, 1000);
             yield return CreateLongSequenceCase(1000, 2000);
@@ -21,23 +22,20 @@ namespace Sorter.Tests
         }
 
         [TestCaseSource(nameof(TestCases))]
-        public async Task<string[]> Should_sort_strings_functional(string[] input, int bufferSizeKb, int lineSize)
+        public async Task<string[]> Should_sort_strings_functional(string[] input, int bufferLength)
         {
             // Given
-            var merger = new KWayMerger<string>(_ => GetDefaultComparer<string>());
-            var settings = Options.Create(new Settings { MergeDeep = 10, BufferSizeKb = bufferSizeKb });
+            var merger = new KWayMerger<string>(GetDefaultComparer<string>());
+            var settings = Options.Create(new Settings { StringBufferLength = bufferLength});
 
-            var converter = Substitute.For<IDataConverter<string>>();
-            converter.DataSize.Returns(lineSize);
-            
             var storeBuilder = Substitute.For<IDataStoreBuilder>();
-            storeBuilder.Build(default, default, default).ReturnsForAnyArgs(x => new MemoryTestDataStore<string>());
+            storeBuilder.Build(Arg.Any<string>()).ReturnsForAnyArgs(x => new MemoryTestDataStore<string>());
+            storeBuilder.Build(Arg.Any<IDataStore<string>>(), default, default, default).ReturnsForAnyArgs(x => x[0]);
             
             var instance = new Sorter(
-                converter, 
                 settings, 
                 storeBuilder,
-                _ => GetDefaultComparer<string>(),
+                GetDefaultComparer<string>(),
                 merger);
             
             var output = new MemoryTestDataStore<string>();
@@ -51,7 +49,7 @@ namespace Sorter.Tests
             return await DataStoreToArrayAsync(output);
         }
 
-        private static TestCaseData CreateLongSequenceCase(int size, int bufferSize)
+        private static TestCaseData CreateLongSequenceCase(int size, int bufferLength)
         {
             var sequence = new string[size];
             for (var index = 0; index < sequence.Length; index++)
@@ -59,13 +57,10 @@ namespace Sorter.Tests
                 sequence[index] = Guid.NewGuid().ToString();
             }
             
-            var lineSize = sequence[0].Length;
-            var bufferSizeKb = bufferSize * lineSize / 1024;
-
             var sorted = sequence.ToArray();
             Array.Sort(sorted);
             
-            return new TestCaseData(sequence, bufferSizeKb, lineSize) { ExpectedResult = sorted };
+            return new TestCaseData(sequence, bufferLength) { ExpectedResult = sorted };
         }
     }    
 }

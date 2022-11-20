@@ -53,14 +53,15 @@ namespace Sorter
             try
             {
                 await sorter.SortAsync(source, dest, stoppingToken);
-                
-                watch.Stop();
-                logger.LogInformation($"Test data sort complete in {watch.Elapsed.TotalSeconds} sec.");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Test data sort failed");
+                throw;
             }
+            
+            watch.Stop();
+            logger.LogInformation($"Test data sort complete in {watch.Elapsed.TotalSeconds} sec.");
             
             lifetime.StopApplication();
         }

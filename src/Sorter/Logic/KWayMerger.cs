@@ -4,6 +4,7 @@ namespace Sorter.Logic
     using System.Threading;
     using System.Threading.Tasks;
     using Contracts;
+    using Structures;
 
     /// <summary>
     /// K-way merge with min heap

@@ -26,12 +26,12 @@ namespace Sorter.Tests
             writePosition = 0;
         }
 
-        public Task<long> GetBulkDataAsync(T[] output)
+        public Task<long> GetBulkDataAsync(T[] buff, int bulkStartIndex, long bulkSize)
         {
             long index = 0;
-            for (index = 0; index < output.Length && !IsEnd(); index++)
+            for (index = 0; index < bulkSize && !IsEnd(); index++)
             {
-                output[index] = buffer[readPosition++];
+                buff[bulkStartIndex + index] = buffer[readPosition++];
             }
 
             return Task.FromResult(index);

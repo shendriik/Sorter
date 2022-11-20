@@ -24,9 +24,9 @@ namespace Sorter.Data.Logic
         
         public async Task ExecuteAsync(CancellationToken cancellation)
         {
-            logger.LogInformation($"Starting test file '{settings.Path}' creation");
+            logger.LogInformation($"Starting test file '{settings.FilePath}' creation");
 
-            await using var writer = new StreamWriter(settings.Path, new FileStreamOptions
+            await using var writer = new StreamWriter(settings.FilePath, new FileStreamOptions
             {
                 Access = FileAccess.Write, 
                 Mode = FileMode.Create
@@ -44,7 +44,7 @@ namespace Sorter.Data.Logic
             }
             
             watch.Stop();
-            logger.LogInformation($"File '{settings.Path}' has been created with size {writer.BaseStream.Length} bytes "+
+            logger.LogInformation($"File '{settings.FilePath}' has been created with size {writer.BaseStream.Length} bytes "+
                                   $"({rowsCount} rows) in {watch.Elapsed.TotalSeconds} sec.");
         }
     }

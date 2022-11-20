@@ -10,20 +10,17 @@ namespace Sorter.Logic
     internal sealed class Sorter: ISorter<string>
     {
         private readonly Settings settings;
-        private readonly IDataConverter<string> dataConverter;
         private readonly IDataStoreBuilder storeBuilder;
         private readonly IMerger<string> merger;
         private readonly IComparer<string> comparer;
         
         public Sorter(
-            IDataConverter<string> dataConverter,
             IOptions<Settings> settings,
             IDataStoreBuilder storeBuilder, 
             IComparer<string> comparer,
             IMerger<string> merger)
         {
             this.settings = settings.Value;
-            this.dataConverter = dataConverter;
             this.storeBuilder = storeBuilder;
             this.comparer = comparer;
             this.merger = merger;
@@ -32,8 +29,7 @@ namespace Sorter.Logic
         
         public async Task SortAsync(IDataStore<string> source, IDataStore<string> output, CancellationToken cancellationToken = default)
         {
-            var bufferSize = settings.BufferSizeKb * 1024 / dataConverter.DataSize ;
-            var buffer = new string[bufferSize];
+            var buffer = new string[settings.StringBufferLength];
             
             var sortedParts = new List<IDataStore<string>>();
             await PartSortAsync(source, buffer, sortedParts, cancellationToken);
@@ -43,18 +39,25 @@ namespace Sorter.Logic
                 return;
             }
             
-            var partBufferSize = (int)Math.Ceiling((float)bufferSize / sortedParts.Count);
+            var partsToMerge = CreatePartsToMerge(buffer, sortedParts);
+
+            await MergeAsync(output, partsToMerge, cancellationToken);
+        }
+
+        private List<IDataStore<string>> CreatePartsToMerge(string[] buffer, List<IDataStore<string>> sortedParts)
+        {
+            var partBufferSize = (int)Math.Ceiling((float)buffer.Length / sortedParts.Count);
             var partsToMerge = new List<IDataStore<string>>(sortedParts.Count);
             for (var index = 0; index < sortedParts.Count; index++)
             {
                 var sortedPart = sortedParts[index];
 
-                var size = Math.Min(partBufferSize, bufferSize - index * partBufferSize);
+                var size = Math.Min(partBufferSize, buffer.Length - index * partBufferSize);
                 var partToMerge = storeBuilder.Build(sortedPart, buffer, index * partBufferSize, size);
                 partsToMerge.Add(partToMerge);
             }
 
-            await MergeAsync(output, partsToMerge, cancellationToken);
+            return partsToMerge;
         }
 
         private async Task PartSortAsync(IDataStore<string> source, string[] buffer, ICollection<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
@@ -83,7 +86,8 @@ namespace Sorter.Logic
                 sortedPart.Close();
                 sortedParts.Add(sortedPart);
                 
-                //GC.Collect();
+                //TODO: multiple strings alloc
+                GC.Collect();
             }
 
             source.Close();
@@ -99,7 +103,7 @@ namespace Sorter.Logic
             Parallel.ForEach(sortedParts, p => p.Close());
             output.Close();
             
-            //TODO: delete parts
+            //TODO: delete useless parts
         }
     }
 }

@@ -40,7 +40,7 @@ namespace Sorter.Tests
         public async Task<T[]> Should_merge_sorted_data<T>(T[] source1,T[] source2, T[] source3, T[] source4)
         {
             // Given
-            var instance = new KWayMerger<T>(_ => GetDefaultComparer<T>());
+            var instance = new KWayMerger<T>(GetDefaultComparer<T>());
             var output = new MemoryTestDataStore<T>();
             
             // When

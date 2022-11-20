@@ -4,8 +4,6 @@ namespace Sorter.Contracts
 
     internal interface IDataConverter<TData>
     {
-        int DataSize { get; }
-        
         Task ConfigureFromSourceAsync(IDataStore<TData> src);
             
         TData InputConversion(TData input);

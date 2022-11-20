@@ -4,7 +4,7 @@ namespace Sorter.Data
     {
         public long SizeInBytes { get; set; }
         
-        public string Path { get; set; }
+        public string FilePath { get; set; }
 
         public int DuplicateEachLineNumber { get; set; }
 
