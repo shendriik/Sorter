@@ -5,7 +5,7 @@ Run with command line arsg, example: **Settings:SizeInBytes=1073741824 Settings:
 Additional generator settings are specified in **appsettings.json** file:<br/> 
 
 ```
-"Settings": {<br/> 
+"Settings": {
     "DuplicateEachLineNumber" : 5, <- Each n line in file will have duplicated text part
     "MinWordsCount" : 7,           <- Minimum words count for text part
     "MaxWordsCount" : 10,          <- Maximum words count for text part
