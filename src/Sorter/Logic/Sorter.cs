@@ -12,7 +12,6 @@ namespace Sorter.Logic
         private readonly Settings settings;
         private readonly IDataConverter<string> dataConverter;
         private readonly IDataStoreBuilder storeBuilder;
-        private readonly Func<bool, IComparer<string>> comparerFunc;
         private readonly IMerger<string> merger;
         private readonly IComparer<string> comparer;
         
@@ -20,15 +19,15 @@ namespace Sorter.Logic
             IDataConverter<string> dataConverter,
             IOptions<Settings> settings,
             IDataStoreBuilder storeBuilder, 
-            Func<bool, IComparer<string>> comparerFunc,
+            IComparer<string> comparer,
             IMerger<string> merger)
         {
             this.settings = settings.Value;
             this.dataConverter = dataConverter;
             this.storeBuilder = storeBuilder;
-            this.comparerFunc = comparerFunc;
+            this.comparer = comparer;
             this.merger = merger;
-            this.comparer = comparerFunc(true);
+            this.comparer = comparer;
         }
         
         public async Task SortAsync(IDataStore<string> source, IDataStore<string> output, CancellationToken cancellationToken = default)
@@ -44,8 +43,6 @@ namespace Sorter.Logic
                 return;
             }
             
-            //GC.Collect();
-
             var partBufferSize = (int)Math.Ceiling((float)bufferSize / sortedParts.Count);
             var partsToMerge = new List<IDataStore<string>>(sortedParts.Count);
             for (var index = 0; index < sortedParts.Count; index++)
@@ -74,7 +71,7 @@ namespace Sorter.Logic
 
                 Array.Sort(buffer, 0, (int)read, comparer);
 
-                var sortedPart = storeBuilder.Build(sortedParts.Count.ToString(), writeConvert: true);
+                var sortedPart = storeBuilder.Build(sortedParts.Count.ToString());
                 sortedPart.OpenWrite();
                 
                 for (var write = 0; write < read; write++)
@@ -85,6 +82,8 @@ namespace Sorter.Logic
 
                 sortedPart.Close();
                 sortedParts.Add(sortedPart);
+                
+                //GC.Collect();
             }
 
             source.Close();

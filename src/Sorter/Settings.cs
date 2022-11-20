@@ -9,7 +9,5 @@ namespace Sorter
         public string DestinationFileName { get; set; }
         
         public int BufferSizeKb { get; set; }
-        
-        public int MergeDeep { get; set; }
     }
 }

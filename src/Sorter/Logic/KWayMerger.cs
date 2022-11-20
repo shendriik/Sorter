@@ -1,6 +1,5 @@
 namespace Sorter.Logic
 {
-    using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
@@ -12,11 +11,11 @@ namespace Sorter.Logic
     /// <typeparam name="TData"></typeparam>
     internal sealed class KWayMerger<TData> : IMerger<TData>
     {
-        private readonly IComparer<TData> dataComparer;
+        private readonly IComparer<TData> comparer;
 
-        public KWayMerger(Func<bool, IComparer<TData>> comparerFunc)
+        public KWayMerger(IComparer<TData> comparer)
         {
-            dataComparer = comparerFunc(false);
+            this.comparer = comparer;
         }
         
         public async Task MergeAsync(
@@ -24,7 +23,7 @@ namespace Sorter.Logic
             IDataStore<TData> dest, 
             CancellationToken cancellationToken = default)
         {
-            var minHeap = new MinHeap<HeapElement>(sources.Count, new HeapElementComparer(dataComparer));
+            var minHeap = new MinHeap<HeapElement>(sources.Count, new HeapElementComparer(comparer));
             
             foreach (var source in sources)
             {

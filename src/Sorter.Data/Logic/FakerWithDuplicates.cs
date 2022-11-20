@@ -15,6 +15,7 @@ namespace Sorter.Data.Logic
         private readonly int additionalWordsMax;
         
         private string duplicate;
+        private long rowNumber;
         
         public FakerWithDuplicates(IOptions<Settings> settings)
         {
@@ -30,13 +31,10 @@ namespace Sorter.Data.Logic
 
         private string GenerateInternal(Faker f)
         {
-            string SetFormat(int number, string text)
-            {
-                return $"{number}. {text}";
-            }
-
+            rowNumber++;
+            
             var number = f.Random.Int(1, this.settings.MaxNumber);
-            if (f.IndexFaker == 0 || f.IndexFaker % rowNumberDivider != 0)
+            if (rowNumber % rowNumberDivider != 0)
             {
                 return SetFormat(number, CreateSentence(f));
             }
@@ -60,6 +58,11 @@ namespace Sorter.Data.Logic
             // var words = Guid.NewGuid().ToString().Split('-');
             var sentence = string.Join(" ", f.Lorem.Words(count));//words.Take(count)); 
             return string.Concat(sentence[..1].ToUpper(), sentence.AsSpan(1));
+        }
+        
+        private string SetFormat(int number, string text)
+        {
+            return $"{number}. {text}";
         }
     }
 }

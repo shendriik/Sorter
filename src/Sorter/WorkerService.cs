@@ -48,7 +48,7 @@ namespace Sorter
             logger.LogInformation($"Prepare run complete in {watch.Elapsed.TotalSeconds} sec.");
 
             using var source = storeBuilder.Build(settings.SourceFileName, readConvert: true);
-            using var dest = storeBuilder.Build(settings.DestinationFileName);
+            using var dest = storeBuilder.Build(settings.DestinationFileName, writeConvert: true);
             
             try
             {
