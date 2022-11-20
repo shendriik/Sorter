@@ -60,13 +60,13 @@ namespace Sorter.Logic.Files
             return IsEnd() ? null : ConvertInput(await reader.ReadLineAsync());
         }
 
-        public async Task<long> GetBulkDataAsync(string[] buffer)
+        public async Task<long> GetBulkDataAsync(string[] buff, int bulkStartIndex, long bulkSize)
         {
             long index = 0;
-            for (index = 0; index < buffer.Length && !IsEnd(); index++)
+            for (index = 0; index < bulkSize && !IsEnd(); index++)
             {
                 var load = await reader.ReadLineAsync();
-                buffer[index] = ConvertInput(load);
+                buff[bulkStartIndex + index] = ConvertInput(load);
             }
 
             return index;

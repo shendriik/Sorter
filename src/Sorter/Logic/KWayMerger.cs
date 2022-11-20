@@ -40,12 +40,13 @@ namespace Sorter.Logic
                 var element = minHeap.RemoveMin();
                 await dest.WriteDataAsync(element.Data, cancellationToken);
 
-                if (element.Store.IsEnd())
+                var data =  await element.Store.GetDataAsync();
+                if (data == null)
                 {
                     continue;
                 }
-                
-                element.Data = await element.Store.GetDataAsync();
+
+                element.Data = data;
                 minHeap.Add(element);
             }
         }

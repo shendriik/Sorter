@@ -33,9 +33,10 @@ namespace Sorter.Logic
         
         public async Task SortAsync(IDataStore<string> source, IDataStore<string> output, CancellationToken cancellationToken = default)
         {
+            var bufferSize = settings.BufferSizeKb * 1024 / dataConverter.DataSize ;
+            var buffer = new string[bufferSize];
+            
             var sortedParts = new List<IDataStore<string>>();
-            var buffer = new string[settings.BufferSizeKb * 1024 / dataConverter.DataSize];
-
             await PartSortAsync(source, buffer, sortedParts, cancellationToken);
 
             if (sortedParts.Count == 0)
@@ -43,7 +44,18 @@ namespace Sorter.Logic
                 return;
             }
 
-            await MergeAsync(output, sortedParts, cancellationToken);
+            var partBufferSize = (int)Math.Ceiling((float)bufferSize / sortedParts.Count);
+            var partsToMerge = new List<IDataStore<string>>(sortedParts.Count);
+            for (var index = 0; index < sortedParts.Count; index++)
+            {
+                var sortedPart = sortedParts[index];
+
+                var size = Math.Min(partBufferSize, bufferSize - index * partBufferSize);
+                var partToMerge = storeBuilder.Build(sortedPart, buffer, index * partBufferSize, size);
+                partsToMerge.Add(partToMerge);
+            }
+
+            await MergeAsync(output, partsToMerge, cancellationToken);
         }
 
         private async Task PartSortAsync(IDataStore<string> source, string[] buffer, ICollection<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
@@ -52,7 +64,7 @@ namespace Sorter.Logic
             
             while (true)
             {
-                var read = await source.GetBulkDataAsync(buffer);
+                var read = await source.GetBulkDataAsync(buffer, 0, buffer.Length);
                 if (read == 0)
                 {
                     break;
@@ -70,8 +82,7 @@ namespace Sorter.Logic
                 }
 
                 sortedPart.Close();
-                var bufferedPartReader = storeBuilder.Build(sortedPart);
-                sortedParts.Add(bufferedPartReader);
+                sortedParts.Add(sortedPart);
             }
 
             source.Close();
@@ -80,7 +91,7 @@ namespace Sorter.Logic
         private async Task MergeAsync(IDataStore<string> output, IReadOnlyCollection<IDataStore<string>> sortedParts, CancellationToken cancellationToken)
         {
             Parallel.ForEach(sortedParts, p => p.OpenRead());
-            output.OpenRead();
+            output.OpenWrite();
             
             await merger.MergeAsync(sortedParts, output, cancellationToken);
             

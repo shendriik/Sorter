@@ -10,7 +10,7 @@ namespace Sorter.Contracts
         
         void OpenWrite();
         
-        Task<long> GetBulkDataAsync(TData[] buffer);
+        Task<long> GetBulkDataAsync(TData[] buffer, int startIndex, long bufferSize);
 
         Task<TData> GetDataAsync();
 

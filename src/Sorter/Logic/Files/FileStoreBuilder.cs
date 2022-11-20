@@ -14,9 +14,9 @@ namespace Sorter.Logic.Files
             this.converter = converter;
         }
         
-        public IDataStore<string> Build(IDataStore<string> store, int bufferSize)
+        public IDataStore<string> Build(IDataStore<string> store, string[] buffer, int start, int size)
         {
-            return new BufferedFileStore(store);
+            return new BufferedFileStore(store, buffer, start, size);
         }
         
         public IDataStore<string> Build(string name, bool readConvert = false, bool writeConvert = false)
