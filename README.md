@@ -1,5 +1,5 @@
 # Sorter.Data <br/> 
-Generates test data file filled with string lines in format **RandomNumber. Random text**<br/> 
+Generates test data file filled with string lines in format '**RandomNumber. Random text**'.<br/> 
 
 Run with command line arsg, example: **Settings:SizeInBytes=1073741824 Settings:FilePath=C:\folder\input.txt**<br/> 
 Additional generator settings are specified in **appsettings.json** file:<br/> 
@@ -14,8 +14,10 @@ Additional generator settings are specified in **appsettings.json** file:<br/>
 ```  
 
 # Sorter <br/> 
-Sorts big file filled with string lines in format **RandomNumber. Random text**.<br/> 
+Sorts big file filled with string lines in format '**RandomNumber. Random text**'. Lines are sorted by the text part, if they are equal - by the numeric part.<br/>
 
-Based on External Merge Sort algorithm. Splits file into small sorted files, then merges them using K-Way Merge algorithm based on min heap.<br/> 
+The input string is converted so that it can be compared using the default comparator for the best performance results. New string formats can be supported by injecting a new implementation of the **IDataConverter** interface.<br/> 
+
+Based on *External Merge Sort algorithm*. Splits file into small sorted files, then merges them using *K-Way Merge algorithm* based on min heap.<br/> 
 Run with command line args, example: **Settings:Path=C:\folder Settings:SourceFileName=input.txt Settings:DestinationFileName=output.txt**<br/> 
 Strings RAM buffer length settings can be redefined in appsettings.json file.<br/> 
