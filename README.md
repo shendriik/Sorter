@@ -1,6 +1,6 @@
-# Sorter.Data
-Generates test data file filled up with string lines in format 'RandomNumber. Random text'.
-Run with command line arg, example: 'Settings:SizeInBytes=1073741824 Settings:FilePath=C:\folder\input.txt'
+# Sorter.Data 
+Generates test data file filled up with string lines in format 'RandomNumber. Random text'. 
+Run with command line arg, example: 'Settings:SizeInBytes=1073741824 Settings:FilePath=C:\folder\input.txt' 
 Additional generator settings are specified in appsettings.json file:
 "Settings": {
     "DuplicateEachLineNumber" : 5, <- Each n line in file will have duplicated text part  
