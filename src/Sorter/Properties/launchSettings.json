@@ -16,7 +16,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "commandLineArgs": "Settings:Path=D:\\sort1 Settings:SourceFileName=input.txt Settings:DestinationFileName=output.txt"
+      "commandLineArgs": ""
     },
     "IIS Express": {
       "commandName": "IISExpress",
