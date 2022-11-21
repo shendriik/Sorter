@@ -19,6 +19,7 @@ Sorts big file filled with string lines in format '**RandomNumber. Random text**
 The input string is converted so that it can be compared using the default comparator for the best performance results. New string formats can be supported by injecting a new implementation of the **IDataConverter** interface.<br/> 
 
 Based on *External Merge Sort algorithm*. Splits file into small sorted files, then merges them using *K-Way Merge algorithm* based on min heap.<br/> 
+
 Run with command line args, example: **Settings:Path=C:\folder Settings:SourceFileName=input.txt Settings:DestinationFileName=output.txt**<br/>
 Additional sorter settings are specified in **appsettings.json** file:<br/>
 ```
@@ -28,4 +29,3 @@ Additional sorter settings are specified in **appsettings.json** file:<br/>
     "MaxDigitLength": 0                <- Max digit length for all of the lines. If 0 it will be computed for the first 10^6 lines
 }
 ```
- settings can be redefined in appsettings.json file.<br/> 
