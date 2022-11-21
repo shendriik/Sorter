@@ -23,8 +23,7 @@ Based on *External Merge Sort algorithm*. Splits file into small sorted files, t
 Run with command line args, example: **Settings:Path=C:\folder Settings:SourceFileName=input.txt Settings:DestinationFileName=output.txt**<br/>
 Additional sorter settings are specified in **appsettings.json** file:<br/>
 ```
-"Settings":
-{
+"Settings": {
     "StringBufferLength": 9000000,     <- Strings RAM buffer length to use in sorting/merging
     "MaxDigitLength": 0                <- Max digit length for all of the lines. If 0 it will be computed for the first 10^6 lines
 }
