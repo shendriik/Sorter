@@ -1,7 +1,5 @@
 namespace Sorter
 {
-    using System.ComponentModel.DataAnnotations;
-
     public sealed class Settings
     {
         public string Path { get; set; }
@@ -11,5 +9,7 @@ namespace Sorter
         public string DestinationFileName { get; set; }
         
         public int StringBufferLength { get; set; }
+        
+        public int MaxDigitLength { get; set; }
     }
 }
